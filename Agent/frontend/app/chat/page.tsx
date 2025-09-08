@@ -1,0 +1,46 @@
+"use client"
+import { ChatInterface } from "@/components/chat-interface"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { BackendStatus } from "@/components/backend-status"
+import { Navigation } from "@/components/navigation"
+import { useEffect, useState } from "react"
+
+export default function ChatPage() {
+  const [sessionId, setSessionId] = useState<string>("")
+
+  // Generate or restore session ID
+  useEffect(() => {
+    const existingSession = localStorage.getItem("session_id")
+    if (existingSession) {
+      setSessionId(existingSession)
+    } else {
+      const newSessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2)}`
+      localStorage.setItem("session_id", newSessionId)
+      setSessionId(newSessionId)
+    }
+  }, [])
+
+  if (!sessionId) return <div>Loading...</div>
+
+  return (
+    <main className="flex flex-col h-screen w-screen bg-gray-900 text-white">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-700 bg-gray-900/95 backdrop-blur-md shadow-md">
+        <div className="flex items-center gap-4">
+          <span className="inline-block h-3 w-3 rounded-full bg-cyan-500 animate-pulse" />
+          <h1 className="text-xl font-semibold tracking-tight">Omaju Chat Assistant</h1>
+          <Navigation />
+        </div>
+        <div className="flex items-center gap-2">
+          <BackendStatus />
+          <ThemeToggle />
+        </div>
+      </header>
+
+      {/* Chat Interface occupies full remaining height */}
+      <div className="flex-1">
+        <ChatInterface sessionId={sessionId} />
+      </div>
+    </main>
+  )
+}
