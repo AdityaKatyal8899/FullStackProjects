@@ -8,13 +8,13 @@ type Props = {
   onGoogle?: () => void
   onGithub?: () => void
 }
-
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
 export function SocialButtons({ onGoogle, onGithub }: Props) {
   const handleGoogleAuth = () => {
     if (onGoogle) {
       onGoogle();
     } else {
-      window.location.href = `http://localhost:5001/api/auth/google`;
+      window.location.href = `${BASE_URL}/api/auth/google`;
     }
   };
 
@@ -22,7 +22,7 @@ export function SocialButtons({ onGoogle, onGithub }: Props) {
     if (onGithub) {
       onGithub();
     } else {
-      window.location.href = `http://localhost:5001/api/auth/github`;
+      window.location.href = `${BASE_URL}/api/auth/github`;
     }
   };
 

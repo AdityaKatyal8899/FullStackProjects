@@ -15,7 +15,7 @@ export default function AuthCallbackPage() {
     const error = searchParams.get('message');
 
     if (error) {
-      console.error('OAuth error:', error);
+      console.error('OAuth error:', error); 
       router.push('/sign-in?error=' + encodeURIComponent(error));
       return;
     }
