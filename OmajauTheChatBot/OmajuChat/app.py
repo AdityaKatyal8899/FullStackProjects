@@ -20,7 +20,7 @@ load_dotenv()
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "your-secret-key-change-this")
-CORS(app, origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:5001"], supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
+CORS(app, origins=["https://omaju-chat-adityakatyal.vercel.app/", "https://omaju-signup.vercel.app/", "https://omajusignup.onrender.com"], supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
 
 # Database setup
 MONGO_URI = os.getenv("MONGO_URI")
