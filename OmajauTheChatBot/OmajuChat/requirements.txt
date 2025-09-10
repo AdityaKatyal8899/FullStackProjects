@@ -9,4 +9,4 @@ gTTS==2.3.2
 pyttsx3==2.90
 langchain==0.3.27           
 langchain-google-genai==2.1.10  
-gunicorn=21.2.0
+gunicorn==21.2.0
