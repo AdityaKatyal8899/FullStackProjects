@@ -61,7 +61,7 @@ export function AuthCard({ mode, onSubmit }: Props) {
       onSubmit?.(formData)
 
       // Redirect to AgentFrontend after successful auth
-      window.location.href = "http://localhost:3000"
+      window.location.href = "https://omaju-chat-adityakatyal.vercel.app"
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed")
     } finally {
