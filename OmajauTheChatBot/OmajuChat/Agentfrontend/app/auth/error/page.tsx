@@ -24,7 +24,7 @@ export default function AuthError() {
           <h1 className="text-xl font-semibold text-white mb-2">Authentication Error</h1>
           <p className="text-gray-400 mb-6">{errorMessage}</p>
           <Button 
-            onClick={() => window.location.href = 'http://localhost:3001'}
+            onClick={() => window.location.href = 'https://omaju-signup.vercel.app/'}
             className="w-full bg-cyan-500 hover:bg-cyan-600"
           >
             Try Again

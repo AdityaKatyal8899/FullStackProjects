@@ -16,7 +16,7 @@ export default function HomePage() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      window.location.href = 'http://localhost:3001'
+      window.location.href = 'https://omaju-signup.vercel.app/'
     }
   }, [isAuthenticated, isLoading])
 

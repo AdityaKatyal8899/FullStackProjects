@@ -54,7 +54,7 @@ def verify_token(token):
     """Verify JWT token from the signup backend"""
     try:
         # For now, we'll verify by making a request to the auth backend
-        auth_backend_url = "http://localhost:5001/api/auth/profile"
+        auth_backend_url = "https://omajusignup.onrender.com"
         headers = {"Authorization": f"Bearer {token}"}
         response = requests.get(auth_backend_url, headers=headers)
         

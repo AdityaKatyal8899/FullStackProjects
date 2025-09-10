@@ -17,7 +17,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       // Redirect to signup page if not authenticated
-      window.location.href = 'http://localhost:3001'
+      window.location.href = 'https://omaju-signup.vercel.app/'
       return
     }
   }, [isAuthenticated, isLoading, router])

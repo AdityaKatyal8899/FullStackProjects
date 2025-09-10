@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const verifyToken = async (accessToken: string) => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/profile', {
+      const response = await fetch('https://omajusignup.onrender.com/api/auth/profile', {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshAccessToken = async (refreshToken: string) => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/refresh-token', {
+      const response = await fetch('https://omajusignup.onrender.com/api/auth/refresh-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     
     // Redirect to signup page
-    window.location.href = 'http://localhost:3001'
+    window.location.href = 'https://omaju-signup.vercel.app/'
   }
 
   return (
