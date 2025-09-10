@@ -56,7 +56,7 @@ export async function sendChatMessage(message: ChatMessage): Promise<ChatRespons
   if (!response.ok) {
     if (response.status === 401) {
       // Token expired or invalid, redirect to login
-      window.location.href = 'http://localhost:3001'
+      window.location.href = 'https://omaju-signup.vercel.app/'
     }
     throw new ApiError(response.status, `HTTP error! status: ${response.status}`)
   }
@@ -80,7 +80,7 @@ export async function getConversationHistory(sessionId: string): Promise<Convers
   if (response.status === 404) return null
   if (response.status === 401) {
     // Token expired or invalid, redirect to login
-    window.location.href = 'http://localhost:3001'
+    window.location.href = 'https://omaju-signup.vercel.app/'
     return null
   }
   if (!response.ok) throw new ApiError(response.status, `HTTP error! status: ${response.status}`)
