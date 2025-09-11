@@ -1,11 +1,21 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const GitHubStrategy = require('passport-github2').Strategy;
-const { GoogleUser, GithubUser, findUserByProviderId, findUserAcrossCollections } = require('../models/User');
+const {
+  GoogleUser,
+  GithubUser,
+  findUserByProviderId,
+  findUserAcrossCollections
+} = require('../models/User');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+// Ensure you set BACKEND_URL in your backend .env
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5001';
 
-// Serialize user for session
+/**
+ * ========================
+ * Serialize / Deserialize
+ * ========================
+ */
 passport.serializeUser((user, done) => {
   done(null, { id: user._id, collection: user.constructor.modelName });
 });
@@ -25,14 +35,16 @@ passport.deserializeUser(async (sessionUser, done) => {
 });
 
 /**
+ * ========================
  * Google OAuth Strategy
+ * ========================
  */
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_REDIRECT_URI || `${FRONTEND_URL}/api/auth/google/callback`,
+      callbackURL: process.env.GOOGLE_REDIRECT_URI || `${BACKEND_URL}/api/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -40,10 +52,11 @@ passport.use(
         if (existingUser) return done(null, existingUser.user);
 
         const email = profile.emails?.[0]?.value;
-        if (!email) return done(new Error("Google account must have an email address"), null);
+        if (!email) return done(new Error('Google account must have an email address'), null);
 
         const duplicateUser = await findUserAcrossCollections(email);
-        if (duplicateUser) return done(new Error(`An account with email ${email} already exists.`), null);
+        if (duplicateUser)
+          return done(new Error(`An account with email ${email} already exists.`), null);
 
         const newUser = new GoogleUser({
           googleId: profile.id,
@@ -64,14 +77,16 @@ passport.use(
 );
 
 /**
+ * ========================
  * GitHub OAuth Strategy
+ * ========================
  */
 passport.use(
   new GitHubStrategy(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: process.env.GITHUB_REDIRECT_URI || `${FRONTEND_URL}/api/auth/github/callback`,
+      callbackURL: process.env.GITHUB_REDIRECT_URI || `${BACKEND_URL}/api/auth/github/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -79,10 +94,11 @@ passport.use(
         if (existingUser) return done(null, existingUser.user);
 
         const email = profile.emails?.[0]?.value;
-        if (!email) return done(new Error("GitHub account must have a public email address"), null);
+        if (!email) return done(new Error('GitHub account must have a public email address'), null);
 
         const duplicateUser = await findUserAcrossCollections(email);
-        if (duplicateUser) return done(new Error(`An account with email ${email} already exists.`), null);
+        if (duplicateUser)
+          return done(new Error(`An account with email ${email} already exists.`), null);
 
         const newUser = new GithubUser({
           githubId: profile.id,
