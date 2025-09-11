@@ -8,8 +8,7 @@ const {
   findUserAcrossCollections
 } = require('../models/User');
 
-// Ensure you set BACKEND_URL in your backend .env
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5001';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 /**
  * ========================
@@ -44,20 +43,24 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_REDIRECT_URI || `${BACKEND_URL}/api/auth/google/callback`,
+      callbackURL: process.env.GOOGLE_REDIRECT_URI || `${FRONTEND_URL}/api/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        // Check if user already exists
         const existingUser = await findUserByProviderId('google', profile.id);
         if (existingUser) return done(null, existingUser.user);
 
+        // Ensure email exists
         const email = profile.emails?.[0]?.value;
-        if (!email) return done(new Error('Google account must have an email address'), null);
+        if (!email) return done(new Error("Google account must have an email address"), null);
 
+        // Check for duplicate email across collections
         const duplicateUser = await findUserAcrossCollections(email);
-        if (duplicateUser)
+        if (duplicateUser) 
           return done(new Error(`An account with email ${email} already exists.`), null);
 
+        // Create new user
         const newUser = new GoogleUser({
           googleId: profile.id,
           email,
@@ -86,20 +89,24 @@ passport.use(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: process.env.GITHUB_REDIRECT_URI || `${BACKEND_URL}/api/auth/github/callback`,
+      callbackURL: process.env.GITHUB_REDIRECT_URI || `${FRONTEND_URL}/api/auth/github/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        // Check if user already exists
         const existingUser = await findUserByProviderId('github', profile.id);
         if (existingUser) return done(null, existingUser.user);
 
+        // Ensure email exists
         const email = profile.emails?.[0]?.value;
-        if (!email) return done(new Error('GitHub account must have a public email address'), null);
+        if (!email) return done(new Error("GitHub account must have a public email address"), null);
 
+        // Check for duplicate email across collections
         const duplicateUser = await findUserAcrossCollections(email);
-        if (duplicateUser)
+        if (duplicateUser) 
           return done(new Error(`An account with email ${email} already exists.`), null);
 
+        // Create new user
         const newUser = new GithubUser({
           githubId: profile.id,
           email,
