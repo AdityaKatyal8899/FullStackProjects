@@ -21,9 +21,14 @@ export default function AuthCallbackPage() {
     }
 
     if (token) {
-      // Login with the token
-      loginWithToken(token).then(() => {
-        router.push('/dashboard');
+      // For OAuth, we typically get both tokens in the response
+      const refreshToken = searchParams.get('refreshToken') || token; // fallback to access token
+      
+      // Login with the tokens
+      loginWithToken(token, refreshToken).then(() => {
+        // Check if there's a return URL to redirect back to OmajuChat
+        const returnUrl = searchParams.get('returnUrl') || 'http://localhost:3000';
+        window.location.href = returnUrl;
       }).catch((error) => {
         console.error('OAuth login error:', error);
         router.push('/sign-in?error=' + encodeURIComponent('Failed to complete authentication'));

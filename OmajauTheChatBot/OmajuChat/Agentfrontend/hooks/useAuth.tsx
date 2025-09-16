@@ -40,9 +40,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const setCookie = (name: string, value: string, days: number) => {
+    try {
+      const date = new Date()
+      date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
+      const expires = `; expires=${date.toUTCString()}`
+      document.cookie = `${name}=${value}; path=/; SameSite=Lax;${process.env.NODE_ENV === 'production' ? ' Secure;' : ''}${expires}`
+    } catch (_) {
+      // no-op in non-browser
+    }
+  }
+
+  const deleteCookie = (name: string) => {
+    try {
+      document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax;${process.env.NODE_ENV === 'production' ? ' Secure;' : ''}`
+    } catch (_) {
+      // no-op
+    }
+  }
+
   const verifyToken = async (accessToken: string) => {
     try {
-      const response = await fetch('https://omajusignup.onrender.com/api/auth/profile', {
+      const response = await fetch('http://localhost:5001/api/auth/profile', {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -54,6 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json()
         setUser(data.data.user)
         setToken(accessToken)
+        // keep cookie fresh if missing
+        setCookie('accessToken', accessToken, 1)
       } else {
         // Token is invalid, try to refresh
         const refreshToken = localStorage.getItem('refreshToken')
@@ -73,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshAccessToken = async (refreshToken: string) => {
     try {
-      const response = await fetch('https://omajusignup.onrender.com/api/auth/refresh-token', {
+      const response = await fetch('http://localhost:5001/api/auth/refresh-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         localStorage.setItem('accessToken', accessToken)
         localStorage.setItem('refreshToken', newRefreshToken)
+        setCookie('accessToken', accessToken, 1)
+        setCookie('refreshToken', newRefreshToken, 30)
         
         await verifyToken(accessToken)
       } else {
@@ -102,6 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (accessToken: string, refreshToken: string) => {
     localStorage.setItem('accessToken', accessToken)
     localStorage.setItem('refreshToken', refreshToken)
+    setCookie('accessToken', accessToken, 1)
+    setCookie('refreshToken', refreshToken, 30)
     
     await verifyToken(accessToken)
   }
@@ -110,11 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('session_id')
+    deleteCookie('accessToken')
+    deleteCookie('refreshToken')
     setUser(null)
     setToken(null)
     
     // Redirect to signup page
-    window.location.href = 'https://omaju-signup.vercel.app/'
+    window.location.href = 'http://localhost:3001'
   }
 
   return (

@@ -1,5 +1,5 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_BACKEND_URL
-  ? `${process.env.NEXT_PUBLIC_AUTH_BACKEND_URL}/api`
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+  ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api`
   : 'http://localhost:5001/api'; // fallback for local dev
 
 export interface SignupData {

@@ -20,7 +20,30 @@ load_dotenv()
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "your-secret-key-change-this")
-CORS(app, origins=["https://omaju-chat-adityakatyal.vercel.app/", "https://omaju-signup.vercel.app/", "https://omajusignup.onrender.com"], supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
+
+# CORS: remove trailing slashes from production origins (browsers send origin without trailing slash)
+CORS(
+    app,
+    origins=[
+        "http://localhost:3000",    # OmajuChat frontend
+        "http://localhost:3001",    # OmajuSignUp frontend
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "https://omaju-chat-adityakatyal.vercel.app",
+        "https://omaju-signup.vercel.app",
+        "https://omajusignup.onrender.com",
+    ],
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+)
+
+# Minimal security headers for responses
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return response
 
 # Database setup
 MONGO_URI = os.getenv("MONGO_URI")
@@ -53,14 +76,20 @@ app.json_encoder = JSONEncoder
 def verify_token(token):
     """Verify JWT token from the signup backend"""
     try:
-        # For now, we'll verify by making a request to the auth backend
-        auth_backend_url = "https://omajusignup.onrender.com"
+        # Use local auth backend for development, fallback to production
+        auth_backend_url = os.getenv("AUTH_BACKEND_URL", "http://localhost:5001")
         headers = {"Authorization": f"Bearer {token}"}
-        response = requests.get(auth_backend_url, headers=headers)
+        response = requests.get(
+            f"{auth_backend_url}/api/auth/profile",
+            headers=headers,
+            timeout=5,
+        )
         
         if response.status_code == 200:
             return response.json().get("data", {}).get("user")
-        return None
+        else:
+            print(f"Auth verify failed: status={response.status_code} body={response.text}")
+            return None
     except Exception as e:
         print(f"Token verification error: {e}")
         return None
@@ -89,6 +118,11 @@ def require_auth(f):
         
         # Add user info to request context
         request.current_user = user
+        # Basic request log for debugging
+        try:
+            print(f"[REQ] {request.method} {request.path} user={user.get('email') or user.get('id')}")
+        except Exception:
+            print(f"[REQ] {request.method} {request.path} user=?")
         return f(*args, **kwargs)
     
     return decorated_function
@@ -96,13 +130,17 @@ def require_auth(f):
 # Root endpoint
 @app.route("/")
 def home():
-    return jsonify({"message": "Welcome to Flask Backend!"})
+    return jsonify({
+        "message": "Welcome to Flask Backend!",
+        "service": "OmajuChat Backend",
+        "time": datetime.utcnow().isoformat()
+    })
 
 # Chat endpoint
-@app.route("/chat", methods=["POST"])
+@app.route("/api/protected/chat", methods=["POST"])
 @require_auth
 def chat():
-    data = request.get_json()
+    data = request.get_json() or {}
     session_id = data.get("session_id")
     user_message = data.get("message")
 
@@ -111,15 +149,23 @@ def chat():
 
     # Save user message
     user_doc = {"role": "user", "content": user_message, "timestamp": datetime.utcnow()}
-    conversations.update_one(
-        {"session_id": session_id},
-        {"$push": {"messages": user_doc}, "$setOnInsert": {"session_id": session_id, "created_at": datetime.utcnow()}},
-        upsert=True
-    )
+    try:
+        conversations.update_one(
+            {"session_id": session_id},
+            {"$push": {"messages": user_doc}, "$setOnInsert": {"session_id": session_id, "created_at": datetime.utcnow()}},
+            upsert=True
+        )
+    except Exception as e:
+        print(f"[DB] Failed to save user message: {e}")
 
     # Fetch last 20 messages for context
-    conversation_doc = conversations.find_one({"session_id": session_id})
-    recent_msgs = conversation_doc.get("messages", [])[-20:]
+    recent_msgs = []
+    try:
+        conversation_doc = conversations.find_one({"session_id": session_id})
+        if conversation_doc:
+            recent_msgs = conversation_doc.get("messages", [])[-20:]
+    except Exception as e:
+        print(f"[DB] Failed to fetch conversation history: {e}")
 
     # Prepare messages for LangChain
     history = []
@@ -135,6 +181,7 @@ def chat():
 
     # Generate AI response
     try:
+        print(f"[AI] Invoking model with {len(full_history)} messages. Session={session_id}")
         agent_msg = chat_model.invoke(full_history)
         agent_response = agent_msg.content
     except Exception as e:
@@ -143,43 +190,58 @@ def chat():
 
     # Save AI response
     ai_doc = {"role": "assistant", "content": agent_response, "timestamp": datetime.utcnow()}
-    conversations.update_one({"session_id": session_id}, {"$push": {"messages": ai_doc}})
+    try:
+        conversations.update_one({"session_id": session_id}, {"$push": {"messages": ai_doc}})
+    except Exception as e:
+        print(f"[DB] Failed to save AI response: {e}")
 
     return jsonify({"response": agent_response})
 
 # Fetch conversation by session
-@app.route("/messages/<session_id>", methods=["GET"])
+@app.route("/api/protected/messages/<session_id>", methods=["GET"])
 @require_auth
 def get_messages(session_id):
-    conversation_doc = conversations.find_one({"session_id": session_id})
-    if not conversation_doc:
-        # New session → create it with Omaju's greeting
-        greeting = {
-            "role": "assistant",
-            "content": "Hey! I am **Omaju**, your buddy for lone times. How may I help?",
-            "timestamp": datetime.utcnow()
-        }
-        conversations.insert_one({
-            "session_id": session_id,
-            "created_at": datetime.utcnow(),
-            "messages": [greeting]
-        })
+    try:
+        conversation_doc = conversations.find_one({"session_id": session_id})
+        if not conversation_doc:
+            # New session → create it with Omaju's greeting
+            greeting = {
+                "role": "assistant",
+                "content": "Hey! I am **Omaju**, your buddy for lone times. How may I help?",
+                "timestamp": datetime.utcnow()
+            }
+            try:
+                conversations.insert_one({
+                    "session_id": session_id,
+                    "created_at": datetime.utcnow(),
+                    "messages": [greeting]
+                })
+            except Exception as e:
+                print(f"[DB] Failed to create new session: {e}")
+            return jsonify({
+                "session_id": session_id,
+                "created_at": datetime.utcnow().isoformat(),
+                "messages": [greeting]
+            })
+        return jsonify(conversation_doc)
+    except Exception as e:
+        print(f"[DB] Failed to get messages: {e}")
+        # Graceful fallback
         return jsonify({
             "session_id": session_id,
             "created_at": datetime.utcnow().isoformat(),
-            "messages": [greeting]
+            "messages": []
         })
-    return jsonify(conversation_doc)
 
 # Clear a session's messages
-@app.route("/clear/<session_id>", methods=["POST"])
+@app.route("/api/protected/clear/<session_id>", methods=["POST"])
 @require_auth
 def clear_messages(session_id):
     conversations.delete_one({"session_id": session_id})
     return jsonify({"message": f"Session {session_id} cleared!"})
 
 # Get user profile endpoint
-@app.route("/profile", methods=["GET"])
+@app.route("/api/protected/profile", methods=["GET"])
 @require_auth
 def get_user_profile():
     """Get current user profile information"""
@@ -206,7 +268,25 @@ def health():
         "status": "healthy" if mongo_status == "connected" else "unhealthy",
         "mongodb": mongo_status,
         "genai": gemini_status,
-        "timestamp": datetime.utcnow().isoformat()
+        "auth_backend": os.getenv("AUTH_BACKEND_URL", "http://localhost:5001"),
+        "frontend_allowed": [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
+            "https://omaju-chat-adityakatyal.vercel.app",
+            "https://omaju-signup.vercel.app",
+            "https://omajusignup.onrender.com",
+        ],
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+# Ready-check endpoint (does not require DB)
+@app.route("/ready", methods=["GET"])
+def ready():
+    return jsonify({
+        "status": "ready",
+        "timestamp": datetime.utcnow().isoformat(),
     })
 
 if __name__ == "__main__":

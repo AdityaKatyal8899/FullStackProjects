@@ -6,6 +6,7 @@ import { Navigation } from "@/components/navigation"
 import { Hero3DBackground } from "@/components/hero-3d-background"
 import { AnimatedSections } from "@/components/animated-sections"
 import { Card, CardContent } from "@/components/ui/card"
+import { AppHeader } from "@/components/AppHeader"
 import { useAuth } from "@/hooks/useAuth"
 import { useEffect } from "react"
 // import { Badge } from "@/components/ui/badge"
@@ -16,7 +17,7 @@ export default function HomePage() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      window.location.href = 'https://omaju-signup.vercel.app/'
+      window.location.href = 'http://localhost:3001'
     }
   }, [isAuthenticated, isLoading])
 
@@ -42,24 +43,8 @@ export default function HomePage() {
   }
   return (
     <main className="relative min-h-screen overflow-x-clip">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4">
-          <div className="flex h-14 items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="inline-block h-3 w-3 rounded-sm bg-cyan-500" aria-hidden />
-                <h1 className="text-pretty text-base font-semibold tracking-tight">Omaju Chat Assisstant</h1>
-              </div>
-              <Navigation />
-            </div>
-            <div className="flex items-center gap-2">
-              <BackendStatus />
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Header with Profile */}
+      <AppHeader />
 
       {/* Hero */}
       <section className="relative">

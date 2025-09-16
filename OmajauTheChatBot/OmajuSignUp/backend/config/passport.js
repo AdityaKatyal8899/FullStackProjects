@@ -8,7 +8,7 @@ const {
   findUserAcrossCollections
 } = require('../models/User');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5001';
 
 /**
  * ========================
@@ -43,7 +43,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_REDIRECT_URI || `${FRONTEND_URL}/api/auth/google/callback`,
+      callbackURL: process.env.GOOGLE_REDIRECT_URI || `${BACKEND_URL}/api/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -89,7 +89,7 @@ passport.use(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: process.env.GITHUB_REDIRECT_URI || `${FRONTEND_URL}/api/auth/github/callback`,
+      callbackURL: process.env.GITHUB_REDIRECT_URI || `${BACKEND_URL}/api/auth/github/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {

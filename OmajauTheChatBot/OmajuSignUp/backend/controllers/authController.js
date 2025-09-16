@@ -224,9 +224,9 @@ const googleOAuthSuccess = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    // Redirect to AgentFrontend with tokens
-    const agentFrontendUrl = process.env.AGENT_FRONTEND_URL || 'http://localhost:3000';
-    res.redirect(`${agentFrontendUrl}/auth/callback?token=${accessToken}&refresh=${refreshToken}&provider=google`);
+    // Redirect to OmajuChat callback page with tokens
+    const returnUrl = 'http://localhost:3000/auth/callback';
+    res.redirect(`${returnUrl}?token=${accessToken}&refreshToken=${refreshToken}&provider=google`);
   } catch (error) {
     console.error('Google OAuth success error:', error);
     const agentFrontendUrl = process.env.AGENT_FRONTEND_URL || 'http://localhost:3000';
@@ -253,9 +253,9 @@ const githubOAuthSuccess = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    // Redirect to AgentFrontend with tokens
-    const agentFrontendUrl = process.env.AGENT_FRONTEND_URL || 'http://localhost:3000';
-    res.redirect(`${agentFrontendUrl}/auth/callback?token=${accessToken}&refresh=${refreshToken}&provider=github`);
+    // Redirect to OmajuChat callback page with tokens
+    const returnUrl = 'http://localhost:3000/auth/callback';
+    res.redirect(`${returnUrl}?token=${accessToken}&refreshToken=${refreshToken}&provider=github`);
   } catch (error) {
     console.error('GitHub OAuth success error:', error);
     const agentFrontendUrl = process.env.AGENT_FRONTEND_URL || 'http://localhost:3000';

@@ -16,11 +16,7 @@ const app = express();
  */
 connectDB();
 
-/**
- * ========================
- * Trust Proxy (for reverse proxies, load balancers)
- * ========================
- */
+
 app.set('trust proxy', 1);
 
 /**
@@ -61,10 +57,12 @@ const corsOptions = {
     if (!origin) return callback(null, true); // allow non-browser requests
 
     const allowedOrigins = [
-      'https://omaju-signup.vercel.app',
-      'https://omaju-chat-adityakatyal.vercel.app',
+      'http://localhost:3000',    // OmajuChat frontend
+      'http://localhost:3001',    // OmajuSignUp frontend
       'http://127.0.0.1:3000',
       'http://127.0.0.1:3001',
+      'https://omaju-signup.vercel.app',
+      'https://omaju-chat-adityakatyal.vercel.app',
       process.env.FRONTEND_URL,
     ].filter(Boolean);
 

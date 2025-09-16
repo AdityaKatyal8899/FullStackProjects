@@ -8,14 +8,24 @@ export default function AuthCallback() {
   const searchParams = useSearchParams()
   const { login } = useAuth()
 
+  const setCookie = (name: string, value: string, days: number) => {
+    const date = new Date()
+    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
+    const expires = `; expires=${date.toUTCString()}`
+    document.cookie = `${name}=${value}; path=/; SameSite=Lax;${process.env.NODE_ENV === 'production' ? ' Secure;' : ''}${expires}`
+  }
+
   useEffect(() => {
     const handleCallback = async () => {
       const token = searchParams.get('token')
-      const refreshToken = searchParams.get('refresh')
+      const refreshToken = searchParams.get('refreshToken')
       const provider = searchParams.get('provider')
 
       if (token && refreshToken) {
         try {
+          // Set cookies so middleware can read them
+          setCookie('accessToken', token, 1)
+          setCookie('refreshToken', refreshToken, 30)
           await login(token, refreshToken)
           router.push('/') // Redirect to chat interface
         } catch (error) {

@@ -7,8 +7,8 @@ interface AuthContextType {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ accessToken: string; refreshToken: string }>;
+  signup: (email: string, password: string, name: string) => Promise<{ accessToken: string; refreshToken: string }>;
   loginWithToken: (accessToken: string, refreshToken: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -77,10 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRefreshToken(tokens.refreshToken);
         localStorage.setItem('accessToken', tokens.accessToken);
         localStorage.setItem('refreshToken', tokens.refreshToken);
+        return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
       }
     } catch (error) {
       throw error;
     }
+    throw new Error('Invalid login response');
   };
 
   const signup = async (email: string, password: string, name: string) => {
@@ -94,10 +96,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRefreshToken(tokens.refreshToken);
         localStorage.setItem('accessToken', tokens.accessToken);
         localStorage.setItem('refreshToken', tokens.refreshToken);
+        return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
       }
     } catch (error) {
       throw error;
     }
+    throw new Error('Invalid signup response');
   };
 
   const loginWithToken = async (authToken: string, refToken: string) => {

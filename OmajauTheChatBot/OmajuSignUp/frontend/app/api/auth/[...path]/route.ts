@@ -35,9 +35,25 @@ async function forwardRequest(
 
     // Send request to backend
     const response = await fetch(backendUrl, options);
-    const data = await response.json();
-
-    return NextResponse.json(data, { status: response.status });
+    
+    // Handle redirects (OAuth callbacks)
+    if (response.redirected || response.status === 302 || response.status === 301) {
+      return NextResponse.redirect(response.url);
+    }
+    
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      return NextResponse.json(data, { status: response.status });
+    } else {
+      // Handle non-JSON responses (HTML, redirects, etc.)
+      const text = await response.text();
+      return new NextResponse(text, { 
+        status: response.status,
+        headers: response.headers
+      });
+    }
   } catch (err) {
     console.error('Auth API proxy error:', err);
     return NextResponse.json(

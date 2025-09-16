@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
+import { authAPI } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -41,6 +42,8 @@ export function AuthCard({ mode, onSubmit }: Props) {
     const formData = Object.fromEntries(fd) as Record<string, string>
 
     try {
+      let accessToken = ""
+      let refreshToken = ""
       if (mode === "signup") {
         // Validate password confirmation
         if (formData.password !== formData.confirm) {
@@ -48,20 +51,25 @@ export function AuthCard({ mode, onSubmit }: Props) {
           return
         }
 
-        await signup(
-          formData.email, 
-          formData.password, 
+        const tokens = await signup(
+          formData.email,
+          formData.password,
           `${formData.firstName} ${formData.lastName}`
         )
+        accessToken = tokens.accessToken
+        refreshToken = tokens.refreshToken
       } else {
-        await login(formData.email, formData.password)
+        const tokens = await login(formData.email, formData.password)
+        accessToken = tokens.accessToken
+        refreshToken = tokens.refreshToken
       }
 
       // Call the original onSubmit if provided
       onSubmit?.(formData)
 
-      // Redirect to AgentFrontend after successful auth
-      window.location.href = "https://omaju-chat-adityakatyal.vercel.app"
+      // Redirect to OmajuChat callback with tokens so it can set cookies
+      const callbackUrl = `http://localhost:3000/auth/callback?token=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}`
+      window.location.href = callbackUrl
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed")
     } finally {

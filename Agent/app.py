@@ -145,5 +145,6 @@ def health():
         "timestamp": datetime.utcnow().isoformat()
     })
 
+
 if __name__ == "__main__":
-    app.run(PORT=5000, debug=True)
+    app.run(port=5000, debug=True)
